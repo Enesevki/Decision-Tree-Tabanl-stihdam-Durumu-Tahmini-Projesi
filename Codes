@@ -1,0 +1,58 @@
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import classification_report, confusion_matrix, recall_score
+import matplotlib.pyplot as plt
+from sklearn.tree import plot_tree
+
+# Veriyi yükle
+train_df = pd.read_excel("final_employment_train_data.xlsx")
+test_df = pd.read_excel("final_employment_test_data.xlsx")
+
+# Özellik ve hedef ayır
+X_train = train_df.drop(columns=["target"])
+y_train = train_df["target"]
+
+X_test = test_df.drop(columns=["target"])
+y_test = test_df["target"]
+
+# Modeli tanımla (depth=6 kullanıcı tercihi)
+model = RandomForestClassifier(
+    n_estimators=200,
+    max_depth=10,
+    min_samples_split=5,
+    min_samples_leaf=3,
+    class_weight="balanced",
+    random_state=42
+)
+
+# Eğit ve tahmin yap
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+# Sonuçları yazdır
+print("Classification Report:\n")
+print(classification_report(y_test, y_pred))
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+# Sensitivity ve Specificity
+sensitivity = recall_score(y_test, y_pred, pos_label=1)
+specificity = recall_score(y_test, y_pred, pos_label=0)
+print(f"\nSensitivity (Recall for Employed): {sensitivity:.2f}")
+print(f"Specificity (Recall for Not Employed): {specificity:.2f}")
+
+# İlk ağaç görselleştirilsin
+plt.figure(figsize=(20, 10))
+plot_tree(
+    model.estimators_[0],
+    feature_names=X_train.columns,
+    class_names=["Not Employed", "Employed"],
+    filled=True,
+    rounded=True,
+    fontsize=10
+)
+plt.title("Random Forest (depth=6) - First Tree Visualization")
+plt.show()
